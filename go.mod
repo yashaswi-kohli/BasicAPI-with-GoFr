@@ -1,4 +1,4 @@
-module github.com/yashaswi-kohli/zopsmart
+module github.com/yashaswi-kohli/BasicAPI
 
 go 1.21.4
 
