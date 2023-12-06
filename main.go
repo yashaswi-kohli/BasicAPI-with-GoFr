@@ -20,8 +20,9 @@ func main() {
 	// initialise gofr object
 	app := gofr.New()
 
-	books = append(books, Book{ID: "1", Isbn: "438227", Title: "Book One", Author: "Yashaswi Kohli"})
-	books = append(books, Book{ID: "2", Isbn: "454555", Title: "Book Two", Author: "Yash Roye"})
+	books = append(books, Book{ID: "1", Isbn: "438227", Title: "Start with Go", Author: "Shivam Karn"})
+	books = append(books, Book{ID: "2", Isbn: "454555", Title: "Intro to Golang", Author: "Yashaswi Kohli"})
+	books = append(books, Book{ID: "3", Isbn: "454323", Title: "Let's code Go", Author: "Bhanu Pratap Singh"})
 
 	app.GET("/books", getBooks)
 	app.GET("/book/{id}", getBook)
