@@ -11,7 +11,7 @@ func main() {
 	app := gofr.New()
 
 	app.GET("/books", controller.GetBooks)
-	app.GET("/books/{id}", controller.GetBooks)
+	app.GET("/books/{id}", controller.GetBook)
 	app.POST("/books", controller.CreateBook)
 	app.PUT("/books/{id}", controller.UpdateBook)
 	app.DELETE("/books/{id}", controller.DeleteBook)

@@ -11,6 +11,12 @@ func GetBooks(ctx *gofr.Context) (interface{}, error) {
 	return books, nil
 }
 
+func GetBook(ctx *gofr.Context) (interface{}, error) {
+	id := ctx.PathParam("id")
+	books := mongo.GetMyBook(id)
+	return books, nil
+}
+
 func CreateBook(ctx *gofr.Context) (interface{}, error) {
 	var book model.Book
 	ctx.Bind(&book)

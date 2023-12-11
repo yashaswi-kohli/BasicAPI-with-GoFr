@@ -58,6 +58,31 @@ func GetAllBooks() []primitive.M {
 	return books
 }
 
+// ! Let's get a single book
+func GetMyBook(bookID string) primitive.M {
+	id, err := primitive.ObjectIDFromHex(bookID)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	filter := bson.D{{Key: "_id", Value: id}}
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer cursor.Close(context.Background())
+
+	var myBook primitive.M
+	if cursor.Next(context.Background()) {
+		err := cursor.Decode(&myBook)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return myBook
+	}
+	return nil
+}
+
 // ! Let's insert one book
 func InsertMyBook(book model.Book) {
 	insertied, err := collection.InsertOne(context.Background(), book)
