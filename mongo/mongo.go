@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gofr.dev/pkg/errors"
 )
 
 const connectionString = "mongodb+srv://yashylibrary:yashy@cluster0.if9dil8.mongodb.net/?retryWrites=true&w=majority"
@@ -61,8 +62,9 @@ func GetAllBooks() ([]primitive.M, error) {
 // * Let's get a single book
 func GetMyBook(bookID string) (primitive.M, error) {
 	id, err := primitive.ObjectIDFromHex(bookID)
+	fmt.Println(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.EntityNotFound{Entity: "id", ID: bookID}
 	}
 
 	filter := bson.D{{Key: "_id", Value: id}}
@@ -94,11 +96,11 @@ func InsertMyBook(book model.Book) error {
 }
 
 // * Let's update one book
-func UpdateMyBook(bookID string, book model.Book) error {
+func UpdateMyBook(bookID string, updateItems model.Book) (primitive.M, error) {
 
 	//? this will convert string into id which mongoDB can accept
 	id, _ := primitive.ObjectIDFromHex(bookID)
-	newBook := mapper.ConvertStructToBSONMap(book, nil)
+	newBook := mapper.ConvertStructToBSONMap(updateItems, nil)
 
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": newBook}
@@ -106,14 +108,21 @@ func UpdateMyBook(bookID string, book model.Book) error {
 	result, err := collection.UpdateMany(context.Background(), filter, update)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println("Total number of values updated are: ", result.ModifiedCount)
-	return nil
+
+	book, err := GetMyBook(bookID)
+	if err != nil {
+		return nil, err
+	}
+
+	return book, nil
 }
 
 // * Let's delete one book
 func DeleteMyBook(bookID string) (*mongo.DeleteResult, error) {
+
 	id, _ := primitive.ObjectIDFromHex(bookID)
 	filter := bson.M{"_id": id}
 

@@ -3,7 +3,9 @@ package controller
 import (
 	"github.com/yashaswi-kohli/BasicAPI/model"
 	"github.com/yashaswi-kohli/BasicAPI/mongo"
-	"github.com/yashaswi-kohli/BasicAPI/testing"
+	"github.com/yashaswi-kohli/BasicAPI/stores"
+
+	"gofr.dev/pkg/errors"
 	"gofr.dev/pkg/gofr"
 )
 
@@ -29,7 +31,7 @@ func CreateBook(ctx *gofr.Context) (interface{}, error) {
 	ctx.Bind(&book)
 
 	//? checking whether the given json is valid or not
-	if err := testing.IsJsonValid(book); err != nil {
+	if err := stores.IsJsonValid(book); err != nil {
 		return nil, err
 	}
 
@@ -44,21 +46,24 @@ func UpdateBook(ctx *gofr.Context) (interface{}, error) {
 	var book model.Book
 	ctx.Bind(&book)
 
-	//? checking whether the given json is valid or not
-	if err := testing.IsJsonValid(book); err != nil {
-		return nil, err
-	}
-
 	id := ctx.PathParam("id")
-	err := mongo.UpdateMyBook(id, book)
+
+	updatedBook, err := mongo.UpdateMyBook(id, book)
 	if err != nil {
 		return nil, err
 	}
-	return book, nil
+	return updatedBook, nil
 }
 
 func DeleteBook(ctx *gofr.Context) (interface{}, error) {
+
 	id := ctx.PathParam("id")
+
+	_, err := mongo.GetMyBook(id)
+	if err != nil {
+		return nil, errors.EntityNotFound{Entity: "id", ID: id}
+	}
+
 	numberOfItemDeleted, err := mongo.DeleteMyBook(id)
 
 	if err != nil {

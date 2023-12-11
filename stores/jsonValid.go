@@ -1,4 +1,4 @@
-package testing
+package stores
 
 import (
 	"encoding/json"
