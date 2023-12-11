@@ -17,7 +17,6 @@ const connectionString = "mongodb+srv://yashylibrary:yashy@cluster0.if9dil8.mong
 const dbName = "library"
 const collectionName = "bookShelf"
 
-// * Improtant data which is table or collection
 var collection *mongo.Collection
 
 // * Let's  connect with mongo
@@ -36,7 +35,7 @@ func init() {
 	collection = client.Database(dbName).Collection(collectionName)
 }
 
-// ! Let's get all books
+// * Let's get all books
 func GetAllBooks() []primitive.M {
 	cursor, err := collection.Find(context.Background(), bson.D{{}})
 	if err != nil {
@@ -58,7 +57,7 @@ func GetAllBooks() []primitive.M {
 	return books
 }
 
-// ! Let's get a single book
+// * Let's get a single book
 func GetMyBook(bookID string) primitive.M {
 	id, err := primitive.ObjectIDFromHex(bookID)
 	if err != nil {
@@ -83,7 +82,7 @@ func GetMyBook(bookID string) primitive.M {
 	return nil
 }
 
-// ! Let's insert one book
+// * Let's insert one book
 func InsertMyBook(book model.Book) {
 	insertied, err := collection.InsertOne(context.Background(), book)
 
@@ -93,7 +92,7 @@ func InsertMyBook(book model.Book) {
 	fmt.Println("Inserted 1 Book in db with id: ", insertied.InsertedID)
 }
 
-// ! Let's update one book
+// * Let's update one book
 func UpdateMyBook(bookID string, book model.Book) {
 
 	//? this will convert string into id which mongoDB can accept
@@ -112,7 +111,7 @@ func UpdateMyBook(bookID string, book model.Book) {
 	fmt.Println("Total number of values updated are: ", result.ModifiedCount)
 }
 
-// ! Let's delete one book
+// * Let's delete one book
 func DeleteMyBook(bookID string) *mongo.DeleteResult {
 	id, _ := primitive.ObjectIDFromHex(bookID)
 	filter := bson.M{"_id": id}
