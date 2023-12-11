@@ -8,14 +8,20 @@ import (
 )
 
 func GetBooks(ctx *gofr.Context) (interface{}, error) {
-	books := mongo.GetAllBooks()
+	books, err := mongo.GetAllBooks()
+	if err != nil {
+		return nil, err
+	}
 	return books, nil
 }
 
 func GetBook(ctx *gofr.Context) (interface{}, error) {
 	id := ctx.PathParam("id")
-	books := mongo.GetMyBook(id)
-	return books, nil
+	book, err := mongo.GetMyBook(id)
+	if err != nil {
+		return nil, err
+	}
+	return book, nil
 }
 
 func CreateBook(ctx *gofr.Context) (interface{}, error) {
@@ -23,12 +29,14 @@ func CreateBook(ctx *gofr.Context) (interface{}, error) {
 	ctx.Bind(&book)
 
 	//? checking whether the given json is valid or not
-	err := testing.IsJsonValid(book)
-	if err != "JSON is Valid" {
-		return err, nil
+	if err := testing.IsJsonValid(book); err != nil {
+		return nil, err
 	}
 
-	mongo.InsertMyBook(book)
+	err := mongo.InsertMyBook(book)
+	if err != nil {
+		return nil, err
+	}
 	return book, nil
 }
 
@@ -37,18 +45,24 @@ func UpdateBook(ctx *gofr.Context) (interface{}, error) {
 	ctx.Bind(&book)
 
 	//? checking whether the given json is valid or not
-	err := testing.IsJsonValid(book)
-	if err != "JSON is Valid" {
-		return err, nil
+	if err := testing.IsJsonValid(book); err != nil {
+		return nil, err
 	}
 
 	id := ctx.PathParam("id")
-	mongo.UpdateMyBook(id, book)
+	err := mongo.UpdateMyBook(id, book)
+	if err != nil {
+		return nil, err
+	}
 	return book, nil
 }
 
 func DeleteBook(ctx *gofr.Context) (interface{}, error) {
 	id := ctx.PathParam("id")
-	numberOfItemDeleted := mongo.DeleteMyBook(id)
-	return numberOfItemDeleted, nil
+	numberOfItemDeleted, err := mongo.DeleteMyBook(id)
+
+	if err != nil {
+		return nil, err
+	}
+	return numberOfItemDeleted, err
 }

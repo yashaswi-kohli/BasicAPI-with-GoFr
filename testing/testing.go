@@ -4,27 +4,32 @@ import (
 	"encoding/json"
 
 	"github.com/yashaswi-kohli/BasicAPI/model"
+	"gofr.dev/pkg/errors"
 )
 
-func IsJsonValid(book model.Book) string {
+func IsJsonValid(book model.Book) error {
 	byteBook, err := json.Marshal(book)
 	valid := json.Valid(byteBook)
 
 	if !valid || err != nil {
-		return "JSON is not in valid format"
+		return &errors.Response{
+			Reason: "Json is not in valid format",
+		}
 	}
 
 	if book.Author == "" {
-		return "Book author should be mentioned"
+		return errors.MissingParam{Param: []string{"author"}}
 	}
 
 	if book.Title == "" {
-		return "Book title should be mentioned"
+		return errors.MissingParam{Param: []string{"title"}}
 	}
 
 	if len(book.Isbn) != 17 {
-		return "ISBN is not in valid format, It's length should be 17"
+		return &errors.Response{
+			Reason: "isbn lenght should be 17",
+		}
 	}
 
-	return "JSON is Valid"
+	return nil
 }
