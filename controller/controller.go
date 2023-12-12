@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+
 	"github.com/yashaswi-kohli/BasicAPI/model"
 	"github.com/yashaswi-kohli/BasicAPI/mongo"
 	"github.com/yashaswi-kohli/BasicAPI/stores"
@@ -14,16 +16,27 @@ func GetBooks(ctx *gofr.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return books, nil
+
+	var theBooks []model.Book
+
+	bookByte, _ := json.Marshal(books)
+	json.Unmarshal(bookByte, &theBooks)
+	return theBooks, nil
 }
 
 func GetBook(ctx *gofr.Context) (interface{}, error) {
-	id := ctx.PathParam("id")
-	book, err := mongo.GetMyBook(id)
+	isbn := ctx.PathParam("isbn")
+	book, err := mongo.GetMyBook(isbn)
+
 	if err != nil {
 		return nil, err
 	}
-	return book, nil
+
+	var theBook model.Book
+
+	bookByte, _ := json.Marshal(book)
+	json.Unmarshal(bookByte, &theBook)
+	return theBook, nil
 }
 
 func CreateBook(ctx *gofr.Context) (interface{}, error) {
@@ -35,36 +48,60 @@ func CreateBook(ctx *gofr.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	err := mongo.InsertMyBook(book)
+	newBookIsbn := book.ISBN
+	_, err := mongo.GetMyBook(newBookIsbn)
+
+	if err == nil {
+		return nil, &errors.Response{
+			Reason: "There is already a book present with the given ISBN",
+		}
+	}
+
+	err = mongo.InsertMyBook(book)
 	if err != nil {
 		return nil, err
 	}
-	return book, nil
+
+	var theBook model.Book
+	bookByte, _ := json.Marshal(book)
+	json.Unmarshal(bookByte, &theBook)
+	return theBook, nil
 }
 
 func UpdateBook(ctx *gofr.Context) (interface{}, error) {
 	var book model.Book
 	ctx.Bind(&book)
 
-	id := ctx.PathParam("id")
+	id := ctx.PathParam("isbn")
 
-	updatedBook, err := mongo.UpdateMyBook(id, book)
+	if book.ISBN != "" {
+		return nil, &errors.Response{
+			Reason: "ISBN could not be updated, once it it published",
+		}
+	}
+
+	uBook, err := mongo.UpdateMyBook(id, book)
 	if err != nil {
 		return nil, err
 	}
-	return updatedBook, nil
+
+	var theBook model.Book
+	bookByte, _ := json.Marshal(uBook)
+	json.Unmarshal(bookByte, &theBook)
+	return theBook, nil
 }
 
 func DeleteBook(ctx *gofr.Context) (interface{}, error) {
 
-	id := ctx.PathParam("id")
+	isbn := ctx.PathParam("isbn")
+	_, err := mongo.GetMyBook(isbn)
 
-	_, err := mongo.GetMyBook(id)
 	if err != nil {
-		return nil, errors.EntityNotFound{Entity: "id", ID: id}
+		return nil, &errors.Response{
+			Reason: "There is no book present with the given ISBN",
+		}
 	}
-
-	numberOfItemDeleted, err := mongo.DeleteMyBook(id)
+	numberOfItemDeleted, err := mongo.DeleteMyBook(isbn)
 
 	if err != nil {
 		return nil, err

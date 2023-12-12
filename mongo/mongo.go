@@ -60,25 +60,30 @@ func GetAllBooks() ([]primitive.M, error) {
 }
 
 // * Let's get a single book
-func GetMyBook(bookID string) (primitive.M, error) {
-	id, err := primitive.ObjectIDFromHex(bookID)
-	fmt.Println(id)
-	if err != nil {
-		return nil, errors.EntityNotFound{Entity: "id", ID: bookID}
-	}
-
-	filter := bson.D{{Key: "_id", Value: id}}
+func GetMyBook(bookIsbn string) (primitive.M, error) {
+	filter := bson.D{{Key: "isbn", Value: bookIsbn}}
 	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
+		log.Println("Error querying MongoDB:", err)
 		return nil, err
 	}
-	defer cursor.Close(context.Background())
+	defer func() {
+		if err := cursor.Close(context.Background()); err != nil {
+			log.Println("Error closing cursor:", err)
+		}
+	}()
 
 	var myBook primitive.M
 	if cursor.Next(context.Background()) {
-		err := cursor.Decode(&myBook)
-		if err != nil {
+		if err := cursor.Decode(&myBook); err != nil {
+			log.Println("Error decoding document:", err)
 			return nil, err
+		}
+	}
+
+	if myBook == nil {
+		return nil, &errors.Response{
+			Reason: "There is no book present with the given ISBN",
 		}
 	}
 	return myBook, nil
@@ -96,14 +101,13 @@ func InsertMyBook(book model.Book) error {
 }
 
 // * Let's update one book
-func UpdateMyBook(bookID string, updateItems model.Book) (primitive.M, error) {
+func UpdateMyBook(bookIsbn string, updateItems model.Book) (primitive.M, error) {
 
 	//? this will convert string into id which mongoDB can accept
-	id, _ := primitive.ObjectIDFromHex(bookID)
 	newBook := mapper.ConvertStructToBSONMap(updateItems, nil)
 
-	filter := bson.M{"_id": id}
 	update := bson.M{"$set": newBook}
+	filter := bson.M{"isbn": bookIsbn}
 
 	result, err := collection.UpdateMany(context.Background(), filter, update)
 
@@ -112,7 +116,7 @@ func UpdateMyBook(bookID string, updateItems model.Book) (primitive.M, error) {
 	}
 	fmt.Println("Total number of values updated are: ", result.ModifiedCount)
 
-	book, err := GetMyBook(bookID)
+	book, err := GetMyBook(bookIsbn)
 	if err != nil {
 		return nil, err
 	}
@@ -121,11 +125,9 @@ func UpdateMyBook(bookID string, updateItems model.Book) (primitive.M, error) {
 }
 
 // * Let's delete one book
-func DeleteMyBook(bookID string) (*mongo.DeleteResult, error) {
+func DeleteMyBook(bookIsbn string) (*mongo.DeleteResult, error) {
 
-	id, _ := primitive.ObjectIDFromHex(bookID)
-	filter := bson.M{"_id": id}
-
+	filter := bson.M{"isbn": bookIsbn}
 	deleteCount, err := collection.DeleteOne(context.Background(), filter)
 
 	if err != nil {

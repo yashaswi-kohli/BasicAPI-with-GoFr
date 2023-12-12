@@ -25,7 +25,11 @@ func IsJsonValid(book model.Book) error {
 		return errors.MissingParam{Param: []string{"title"}}
 	}
 
-	if len(book.Isbn) != 17 {
+	if book.Publisher == "" {
+		return errors.MissingParam{Param: []string{"publisher"}}
+	}
+
+	if len(book.ISBN) != 17 {
 		return &errors.Response{
 			Reason: "isbn lenght should be 17",
 		}
