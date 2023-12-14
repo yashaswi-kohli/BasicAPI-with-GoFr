@@ -14,9 +14,9 @@ import (
 	"gofr.dev/pkg/errors"
 )
 
-const connectionString = "mongodb+srv://yashylibrary:yashy@cluster0.if9dil8.mongodb.net/?retryWrites=true&w=majority"
-const dbName = "library"
-const collectionName = "bookShelf"
+const dbName = "Database Name"
+const connectionString = "MongoDB URL"
+const collectionName = "Collection Name"
 
 var collection *mongo.Collection
 
@@ -103,7 +103,7 @@ func InsertMyBook(book model.Book) error {
 // * Let's update one book
 func UpdateMyBook(bookIsbn string, updateItems model.Book) (primitive.M, error) {
 
-	//? this will convert string into id which mongoDB can accept
+	//* this will convert struct into primitive.M
 	newBook := mapper.ConvertStructToBSONMap(updateItems, nil)
 
 	update := bson.M{"$set": newBook}
@@ -120,7 +120,6 @@ func UpdateMyBook(bookIsbn string, updateItems model.Book) (primitive.M, error) 
 	if err != nil {
 		return nil, err
 	}
-
 	return book, nil
 }
 

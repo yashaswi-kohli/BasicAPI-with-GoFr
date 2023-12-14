@@ -7,7 +7,6 @@ import (
 
 func main() {
 
-	// initialise gofr object
 	app := gofr.New()
 
 	app.GET("/books", controller.GetBooks)
@@ -16,7 +15,6 @@ func main() {
 	app.PUT("/books/{isbn}", controller.UpdateBook)
 	app.DELETE("/books/{isbn}", controller.DeleteBook)
 
-	// Starts the server, it will listen on the default port 8000.
-	// it can be over-ridden through configs
+	// It start's the server on port 8000
 	app.Start()
 }
