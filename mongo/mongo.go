@@ -14,7 +14,7 @@ import (
 	"gofr.dev/pkg/errors"
 )
 
-const connectionString = "mongodb+srv://yashylibrary:yashy@cluster0.if9dil8.mongodb.net/?retryWrites=true&w=majority"
+const connectionString = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.1.0"
 const dbName = "library"
 const collectionName = "bookShelf"
 
@@ -59,8 +59,40 @@ func GetAllBooks() ([]primitive.M, error) {
 	return books, nil
 }
 
+// * Let's get all books with author name
+func GetMyBookAuthor(author string) ([]primitive.M, error) {
+	filter := bson.D{{Key: "author", Value: author}}
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		log.Println("Error querying MongoDB:", err)
+		return nil, err
+	}
+	defer func() {
+		if err := cursor.Close(context.Background()); err != nil {
+			log.Println("Error closing cursor:", err)
+		}
+	}()
+
+	var books []primitive.M
+	for cursor.Next(context.Background()) {
+		var book primitive.M
+		err := cursor.Decode(&book)
+		if err != nil {
+			return nil, err
+		}
+		books = append(books, book)
+	}
+
+	if len(books) == 0 {
+		return nil, &errors.Response{
+			Reason: "There is no book present with the given author name",
+		}
+	}
+	return books, nil
+}
+
 // * Let's get a single book
-func GetMyBook(bookIsbn string) (primitive.M, error) {
+func GetMyBookIsbn(bookIsbn string) (primitive.M, error) {
 	filter := bson.D{{Key: "isbn", Value: bookIsbn}}
 	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
@@ -103,7 +135,7 @@ func InsertMyBook(book model.Book) error {
 // * Let's update one book
 func UpdateMyBook(bookIsbn string, updateItems model.Book) (primitive.M, error) {
 
-	//? this will convert string into id which mongoDB can accept
+	//* this will convert struct into primitive.M
 	newBook := mapper.ConvertStructToBSONMap(updateItems, nil)
 
 	update := bson.M{"$set": newBook}
@@ -116,11 +148,10 @@ func UpdateMyBook(bookIsbn string, updateItems model.Book) (primitive.M, error) 
 	}
 	fmt.Println("Total number of values updated are: ", result.ModifiedCount)
 
-	book, err := GetMyBook(bookIsbn)
+	book, err := GetMyBookIsbn(bookIsbn)
 	if err != nil {
 		return nil, err
 	}
-
 	return book, nil
 }
 
