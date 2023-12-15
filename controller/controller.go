@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/yashaswi-kohli/BasicAPI/model"
 	"github.com/yashaswi-kohli/BasicAPI/mongo"
@@ -22,9 +23,24 @@ func GetBooks(ctx *gofr.Context) (interface{}, error) {
 	return theBooks, nil
 }
 
-func GetBook(ctx *gofr.Context) (interface{}, error) {
+func GetBooksAuthor(ctx *gofr.Context) (interface{}, error) {
+	author := ctx.PathParam("author")
+	fmt.Println("the author name is", author)
+	books, err := mongo.GetMyBookAuthor(author)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var theBooks []model.Book
+	bookByte, _ := json.Marshal(books)
+	json.Unmarshal(bookByte, &theBooks)
+	return theBooks, nil
+}
+
+func GetBookISBN(ctx *gofr.Context) (interface{}, error) {
 	isbn := ctx.PathParam("isbn")
-	book, err := mongo.GetMyBook(isbn)
+	book, err := mongo.GetMyBookIsbn(isbn)
 
 	if err != nil {
 		return nil, err
@@ -47,7 +63,7 @@ func CreateBook(ctx *gofr.Context) (interface{}, error) {
 
 	//* this will check whether the book is already present or not
 	newBookIsbn := book.ISBN
-	_, err := mongo.GetMyBook(newBookIsbn)
+	_, err := mongo.GetMyBookIsbn(newBookIsbn)
 
 	if err == nil {
 		return nil, &errors.Response{
@@ -79,6 +95,12 @@ func UpdateBook(ctx *gofr.Context) (interface{}, error) {
 		}
 	}
 
+	if book.Author == "" && book.Title == "" && book.Publisher == "" {
+		return nil, &errors.Response{
+			Reason: "Check the format of data, or the name of the fields, it should be author, title and publisher",
+		}
+	}
+
 	uBook, err := mongo.UpdateMyBook(id, book)
 	if err != nil {
 		return nil, err
@@ -93,7 +115,7 @@ func UpdateBook(ctx *gofr.Context) (interface{}, error) {
 func DeleteBook(ctx *gofr.Context) (interface{}, error) {
 
 	isbn := ctx.PathParam("isbn")
-	_, err := mongo.GetMyBook(isbn)
+	_, err := mongo.GetMyBookIsbn(isbn)
 
 	//* checking whether the book is present or not in the library
 	if err != nil {
@@ -124,19 +146,19 @@ func isJsonValid(book model.Book) error {
 	//* checking whether the required fields are present or not
 	if book.Author == "" {
 		return &errors.Response{
-			Reason: "The author name is missing",
+			Reason: "The name of the author is missing.",
 		}
 	}
 
 	if book.Title == "" {
 		return &errors.Response{
-			Reason: "The title is missing",
+			Reason: "The title of the book is missing.",
 		}
 	}
 
 	if book.Publisher == "" {
 		return &errors.Response{
-			Reason: "The publisher name is missing",
+			Reason: "The name of the publisher is missing.",
 		}
 	}
 
